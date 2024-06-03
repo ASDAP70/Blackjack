@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game">
+        <h1>Blackjack</h1>
+        <div id="dealer">
+            <h2>Dealer's Hand</h2>
+            <div id="dealer-hand"></div>
+            <p id="dealer-score"></p>
+        </div>
+        <div id="player">
+            <h2>Your Hand</h2>
+            <div id="player-hand"></div>
+            <p id="player-score"></p>
+        </div>
+        <div id="controls">
+            <button id="hit">Hit</button>
+            <button id="stand">Stand</button>
+            <button id="reset">Reset</button>
+        </div>
+        <p id="result"></p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #228B22;
+    color: white;
+}
+
+#game {
+    margin-top: 50px;
+}
+
+#dealer, #player {
+    margin: 20px;
+}
+
+#controls button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+#result {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const deck = [];
+    const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+    const values = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11];
+    
+    suits.forEach(suit => {
+        values.forEach(value => {
+            deck.push({ suit, value });
+        });
+    });
+    
+    let playerHand = [];
+    let dealerHand = [];
+
+    function dealCard(hand) {
+        const card = deck.splice(Math.floor(Math.random() * deck.length), 1)[0];
+        hand.push(card);
+    }
+
+    function calculateScore(hand) {
+        let score = hand.reduce((acc, card) => acc + card.value, 0);
+        let aces = hand.filter(card => card.value === 11).length;
+
+        while (score > 21 && aces > 0) {
+            score -= 10;
+            aces -= 1;
+        }
+        return score;
+    }
+
+    function updateDisplay() {
+        document.getElementById('player-hand').innerHTML = playerHand.map(card => `${card.value} of ${card.suit}`).join(', ');
+        document.getElementById('dealer-hand').innerHTML = dealerHand.map((card, i) => i === 0 ? 'Hidden' : `${card.value} of ${card.suit}`).join(', ');
+        document.getElementById('player-score').textContent = `Score: ${calculateScore(playerHand)}`;
+        document.getElementById('dealer-score').textContent = `Score: ?`;
+    }
+
+    function showFinalDealerHand() {
+        document.getElementById('dealer-hand').innerHTML = dealerHand.map(card => `${card.value} of ${card.suit}`).join(', ');
+        document.getElementById('dealer-score').textContent = `Score: ${calculateScore(dealerHand)}`;
+    }
+
+    function checkForEndGame() {
+        const playerScore = calculateScore(playerHand);
+        const dealerScore = calculateScore(dealerHand);
+
+        if (playerScore > 21) {
+            document.getElementById('result').textContent = 'Bust! You lose.';
+            return true;
+        }
+        if (dealerScore > 21) {
+            document.getElementById('result').textContent = 'Dealer busts! You win!';
+            return true;
+        }
+        if (dealerScore >= 17 && dealerScore >= playerScore) {
+            document.getElementById('result').textContent = dealerScore > playerScore ? 'You lose!' : 'It\'s a draw!';
+            return true;
+        }
+        return false;
+    }
+
+    document.getElementById('hit').addEventListener('click', () => {
+        dealCard(playerHand);
+        updateDisplay();
+
+        if (calculateScore(playerHand) > 21) {
+            document.getElementById('result').textContent = 'Bust! You lose.';
+        }
+    });
+
+    document.getElementById('stand').addEventListener('click', () => {
+        while (calculateScore(dealerHand) < 17) {
+            dealCard(dealerHand);
+        }
+        showFinalDealerHand();
+        checkForEndGame();
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+        playerHand = [];
+        dealerHand = [];
+        deck.length = 0;
+        suits.forEach(suit => {
+            values.forEach(value => {
+                deck.push({ suit, value });
+            });
+        });
+        document.getElementById('result').textContent = '';
+        dealCard(playerHand);
+        dealCard(playerHand);
+        dealCard(dealerHand);
+        dealCard(dealerHand);
+        updateDisplay();
+    });
+
+    dealCard(playerHand);
+    dealCard(playerHand);
+    dealCard(dealerHand);
+    dealCard(dealerHand);
+    updateDisplay();
+});
+
